@@ -302,3 +302,203 @@ namespace AccountManagementModule {
         }
     }
 }
+
+// ============================================================================
+// PHAN 4: MODULE GIAO DICH NGAN HANG & SAO KE LICH SU
+// THANH VIEN PHU TRACH: VONG THE QUYEN - MSSV: 6651060051
+// NHANH GIT: TV3-nghiep-vu-giao-dich
+// NHIEM VU: Nap tien, Rut tien, Chuyen khoan an toan, Xuat sao ke giao dich
+// ============================================================================
+
+namespace TransactionModule {
+
+    // Ham lay thoi gian thuc he thong
+    string getCurrentTime() {
+        time_t now = time(0);
+        tm *ltm = localtime(&now);
+        stringstream ss;
+        ss << setfill('0') << setw(2) << ltm->tm_mday << "/"
+           << setfill('0') << setw(2) << 1 + ltm->tm_mon << "/"
+           << 1900 + ltm->tm_year << " "
+           << setfill('0') << setw(2) << ltm->tm_hour << ":"
+           << setfill('0') << setw(2) << ltm->tm_min << ":"
+           << setfill('0') << setw(2) << ltm->tm_sec;
+        return ss.str();
+    }
+
+    // Chuc nang 1: Nap tien vao tai khoan
+    void deposit(HashTable& ht) {
+        cout << "\n--- [MODULE THE QUYEN] NAP TIEN VAO TAI KHOAN ---\n";
+        string accNum;
+        double amount;
+
+        cout << "Nhap so tai khoan: ";
+        cin >> accNum;
+
+        Account* acc = ht.searchAccount(accNum);
+        if (acc == nullptr) {
+            cout << "=> ERROR: Tai khoan khong ton tai!\n";
+            return;
+        }
+
+        cout << "Nhap so tien muon nap (VND): ";
+        cin >> amount;
+        if (amount <= 0) {
+            cout << "=> ERROR: So tien nap phai lon hon 0!\n";
+            return;
+        }
+
+        acc->balance += amount;
+
+        Transaction trans;
+        trans.transID = "TX" + to_string(rand() % 900000 + 100000);
+        trans.type = "Nap tien";
+        trans.amount = amount;
+        trans.timestamp = getCurrentTime();
+        trans.note = "Nap tien tai quay";
+
+        acc->history.push_back(trans);
+
+        cout << "=> THANH CONG: Da nap " << fixed << setprecision(0) << amount 
+             << " VND. So du moi: " << acc->balance << " VND\n";
+    }
+
+    // Chuc nang 2: Rut tien tu tai khoan
+    void withdraw(HashTable& ht) {
+        cout << "\n--- [MODULE THE QUYEN] RUT TIEN TU TAI KHOAN ---\n";
+        string accNum;
+        double amount;
+
+        cout << "Nhap so tai khoan: ";
+        cin >> accNum;
+
+        Account* acc = ht.searchAccount(accNum);
+        if (acc == nullptr) {
+            cout << "=> ERROR: Tai khoan khong ton tai!\n";
+            return;
+        }
+
+        cout << "Nhap so tien muon rut (VND): ";
+        cin >> amount;
+        if (amount <= 0) {
+            cout << "=> ERROR: So tien rut phai lon hon 0!\n";
+            return;
+        }
+
+        if (acc->balance - amount < 50000) {
+            cout << "=> ERROR: So du khong du! Phai duy tri so du toi thieu 50,000 VND.\n";
+            return;
+        }
+
+        acc->balance -= amount;
+
+        Transaction trans;
+        trans.transID = "TX" + to_string(rand() % 900000 + 100000);
+        trans.type = "Rut tien";
+        trans.amount = amount;
+        trans.timestamp = getCurrentTime();
+        trans.note = "Rut tien tai ATM/Quay";
+
+        acc->history.push_back(trans);
+
+        cout << "=> THANH CONG: Da rut " << fixed << setprecision(0) << amount 
+             << " VND. So du con lai: " << acc->balance << " VND\n";
+    }
+
+    // Chuc nang 3: Chuyen khoan an toan
+    void transfer(HashTable& ht) {
+        cout << "\n--- [MODULE THE QUYEN] CHUYEN KHOAN AN TOAN ---\n";
+        string srcAccNum, destAccNum;
+        double amount;
+
+        cout << "Nhap so tai khoan NGUOI GUI: ";
+        cin >> srcAccNum;
+        Account* srcAcc = ht.searchAccount(srcAccNum);
+        if (srcAcc == nullptr) {
+            cout << "=> ERROR: Tai khoan nguoi gui khong ton tai!\n";
+            return;
+        }
+
+        cout << "Nhap so tai khoan NGUOI NHAN: ";
+        cin >> destAccNum;
+        if (srcAccNum == destAccNum) {
+            cout << "=> ERROR: Khong the chuyen khoan cho chinh minh!\n";
+            return;
+        }
+
+        Account* destAcc = ht.searchAccount(destAccNum);
+        if (destAcc == nullptr) {
+            cout << "=> ERROR: Tai khoan nguoi nhan khong ton tai!\n";
+            return;
+        }
+
+        cout << "Nhap so tien chuyen (VND): ";
+        cin >> amount;
+        if (amount <= 0) {
+            cout << "=> ERROR: So tien chuyen phai lon hon 0!\n";
+            return;
+        }
+
+        if (srcAcc->balance - amount < 50000) {
+            cout << "=> ERROR: So du nguoi gui khong du de chuyen khoan!\n";
+            return;
+        }
+
+        // Thuc hien giao dich chuyen khoan
+        srcAcc->balance -= amount;
+        destAcc->balance += amount;
+
+        string timeStr = getCurrentTime();
+        string txID = "TX" + to_string(rand() % 900000 + 100000);
+
+        // Luu lich su nguoi gui
+        Transaction t1;
+        t1.transID = txID;
+        t1.type = "Chuyen tien di";
+        t1.amount = amount;
+        t1.timestamp = timeStr;
+        t1.note = "Chuyen toi TK: " + destAccNum + " (" + destAcc->fullName + ")";
+        srcAcc->history.push_back(t1);
+
+        // Luu lich su nguoi nhan
+        Transaction t2;
+        t2.transID = txID;
+        t2.type = "Nhan tien den";
+        t2.amount = amount;
+        t2.timestamp = timeStr;
+        t2.note = "Nhan tu TK: " + srcAccNum + " (" + srcAcc->fullName + ")";
+        destAcc->history.push_back(t2);
+
+        cout << "=> THANH CONG: Da chuyen " << fixed << setprecision(0) << amount 
+             << " VND tu TK " << srcAccNum << " sang TK " << destAccNum << "!\n";
+    }
+
+    // Chuc nang 4: In sao ke lich su giao dich
+    void printStatement(HashTable& ht) {
+        cout << "\n--- [MODULE THE QUYEN] XUAT SAO KE GIAO DICH ---\n";
+        string accNum;
+        cout << "Nhap so tai khoan can in sao ke: ";
+        cin >> accNum;
+
+        Account* acc = ht.searchAccount(accNum);
+        if (acc == nullptr) {
+            cout << "=> ERROR: Tai khoan khong ton tai!\n";
+            return;
+        }
+
+        cout << "\n======================================================================\n";
+        cout << "                SAO KE LICH SU GIAO DICH NGAN HANG                   \n";
+        cout << " So TK: " << acc->accountNumber << " | Chu TK: " << acc->fullName << endl;
+        cout << " So du hien tai: " << fixed << setprecision(0) << acc->balance << " VND\n";
+        cout << "----------------------------------------------------------------------\n";
+
+        if (acc->history.empty()) {
+            cout << "   (Chua co giao dich nao duoc thuc hien)\n";
+        } else {
+            for (const auto& t : acc->history) {
+                t.display();
+            }
+        }
+        cout << "======================================================================\n";
+    }
+}
