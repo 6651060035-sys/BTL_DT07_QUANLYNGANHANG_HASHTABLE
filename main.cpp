@@ -210,4 +210,95 @@ public:
         return result;
     }
 };
+// ============================================================================
+// PHAN 3: MODULE QUAN LY TAI KHOAN (MO TAI KHOAN, TRA CUU O(1) & BAT LOI)
+// THANH VIEN PHU TRACH: NGUYEN PHUONG HOANG TRONG - MSSV: 6651060065
+// NHANH GIT: TV2-quan-ly-tai-khoan
+// NHIEM VU: Mo tai khoan moi, Tra cuu O(1), Xoa tai khoan, Bat loi nhap lieu
+// ============================================================================
 
+namespace AccountManagementModule {
+
+    // Kiem tra chuoi chi chua ky tu so
+    bool isNumeric(const string& str) {
+        if (str.empty()) return false;
+        for (char c : str) {
+            if (!isdigit(c)) return false;
+        }
+        return true;
+    }
+
+    // Chuc nang 1: Mo tai khoan khach hang moi
+    void openNewAccount(HashTable& ht) {
+        cout << "\n--- [MODULE HOANG TRONG] MO TAI KHOAN MOI ---\n";
+        string accNum, name, idCard;
+        double initBalance;
+
+        cout << "Nhap so tai khoan (chuoi chu so): ";
+        cin >> accNum;
+        if (!isNumeric(accNum) || accNum.length() < 4) {
+            cout << "=> ERROR: So tai khoan khong hop le! Phai la chuoi so.\n";
+            return;
+        }
+
+        if (ht.searchAccount(accNum) != nullptr) {
+            cout << "=> ERROR: So tai khoan " << accNum << " da ton tai trong he thong!\n";
+            return;
+        }
+
+        cin.ignore();
+        cout << "Nhap ho va ten khach hang: ";
+        getline(cin, name);
+        if (name.empty()) {
+            cout << "=> ERROR: Ten khach hang khong duoc de rong!\n";
+            return;
+        }
+
+        cout << "Nhap so CCCD/CMND: ";
+        cin >> idCard;
+
+        cout << "Nhap so du ban dau (Toi thieu 50,000 VND): ";
+        cin >> initBalance;
+        if (initBalance < 50000) {
+            cout << "=> ERROR: So du ban dau toi thieu phai tu 50,000 VND!\n";
+            return;
+        }
+
+        Account newAcc(accNum, name, idCard, initBalance);
+        if (ht.insertAccount(newAcc)) {
+            cout << "=> THANH CONG: Da mo tai khoan " << accNum << " cho khach hang " << name << "!\n";
+        } else {
+            cout << "=> ERROR: Khong the them tai khoan vao Bang bam!\n";
+        }
+    }
+
+    // Chuc nang 2: Tra cuu thong tin tai khoan tuc thoi O(1)
+    void searchAccountInfo(HashTable& ht) {
+        cout << "\n--- [MODULE HOANG TRONG] TRA CUU TAI KHOAN O(1) ---\n";
+        string accNum;
+        cout << "Nhap so tai khoan can tra cuu: ";
+        cin >> accNum;
+
+        Account* acc = ht.searchAccount(accNum);
+        if (acc != nullptr) {
+            cout << "=> TIM THAY TAI KHOAN TUC THOI O(1):\n";
+            acc->displayInfo();
+        } else {
+            cout << "=> KHONG TIM THAY tai khoan: " << accNum << endl;
+        }
+    }
+
+    // Chuc nang 3: Xoa tai khoan
+    void closeAccount(HashTable& ht) {
+        cout << "\n--- [MODULE HOANG TRONG] XOA TAI KHOAN ---\n";
+        string accNum;
+        cout << "Nhap so tai khoan can xoa: ";
+        cin >> accNum;
+
+        if (ht.deleteAccount(accNum)) {
+            cout << "=> THANH CONG: Da xoa tai khoan " << accNum << " khoi he thong.\n";
+        } else {
+            cout << "=> ERROR: Khong tim thay tai khoan " << accNum << " de xoa.\n";
+        }
+    }
+}
