@@ -502,3 +502,110 @@ namespace TransactionModule {
         cout << "======================================================================\n";
     }
 }
+
+// ============================================================================
+// PHAN 5: MODULE DOC/GHI FILE & GIAO DIEN CONSOLE MENU
+// THANH VIEN PHU TRACH: HUYNH ANH TU - MSSV: 6651060069
+// NHANH GIT: TV4-doc-ghi-file-giao-dien
+// NHIEM VU: Doc/Ghi du lieu ben vung xuong file CSV, Giao dien Menu Console
+// ============================================================================
+
+namespace FileAndUIModule {
+
+    const string DATA_FILE = "bank_data.csv";
+
+    // Chuc nang 1: Luu toan bo du lieu ra File CSV
+    void saveData(const HashTable& ht) {
+        ofstream outFile(DATA_FILE);
+        if (!outFile.is_open()) {
+            cout << "=> ERROR: Khong the mo file de ghi du lieu!\n";
+            return;
+        }
+
+        vector<Account*> accounts = ht.getAllAccounts();
+        for (Account* acc : accounts) {
+            // Dinh dang dong tai khoan: ACC,accountNumber,fullName,idCard,balance
+            outFile << "ACC," << acc->accountNumber << "," << acc->fullName << ","
+                    << acc->idCard << "," << fixed << setprecision(0) << acc->balance << "\n";
+
+            // Dinh dang dong giao dich: TRANS,transID,type,amount,timestamp,note
+            for (const auto& t : acc->history) {
+                outFile << "TRANS," << t.transID << "," << t.type << ","
+                        << fixed << setprecision(0) << t.amount << ","
+                        << t.timestamp << "," << t.note << "\n";
+            }
+        }
+
+        outFile.close();
+        cout << "=> [MODULE ANH TU] Da luu thanh cong " << accounts.size() 
+             << " tai khoan ra file '" << DATA_FILE << "'!\n";
+    }
+
+    // Chuc nang 2: Doc khoi phuc du lieu tu File CSV khi khoi dong
+    void loadData(HashTable& ht) {
+        ifstream inFile(DATA_FILE);
+        if (!inFile.is_open()) {
+            cout << "=> [MODULE ANH TU] Khong tim thay file du lieu cu. Se khoi tao he thong moi.\n";
+            return;
+        }
+
+        string line;
+        Account* lastAcc = nullptr;
+        int accCount = 0;
+
+        while (getline(inFile, line)) {
+            if (line.empty()) continue;
+            stringstream ss(line);
+            string type;
+            getline(ss, type, ',');
+
+            if (type == "ACC") {
+                string accNum, name, idCard, balStr;
+                getline(ss, accNum, ',');
+                getline(ss, name, ',');
+                getline(ss, idCard, ',');
+                getline(ss, balStr, ',');
+
+                double bal = stod(balStr);
+                Account acc(accNum, name, idCard, bal);
+                ht.insertAccount(acc);
+                lastAcc = ht.searchAccount(accNum);
+                accCount++;
+            } else if (type == "TRANS" && lastAcc != nullptr) {
+                Transaction t;
+                string amtStr;
+                getline(ss, t.transID, ',');
+                getline(ss, t.type, ',');
+                getline(ss, amtStr, ',');
+                getline(ss, t.timestamp, ',');
+                getline(ss, t.note, ',');
+
+                t.amount = stod(amtStr);
+                lastAcc->history.push_back(t);
+            }
+        }
+
+        inFile.close();
+        cout << "=> [MODULE ANH TU] Da nap thanh cong " << accCount 
+             << " tai khoan tu file '" << DATA_FILE << "'!\n";
+    }
+
+    // Chuc nang 3: Giao dien Menu Console tuong tac
+    void showMenu() {
+        cout << "\n================================================================\n";
+        cout << "     HE THONG QUAN LY TAI KHOAN & GIAO DICH NGAN HANG (DT07)    \n";
+        cout << "================================================================\n";
+        cout << " 1. Mo tai khoan moi               (Phu trach: Hoang Trong)     \n";
+        cout << " 2. Tra cuu tai khoan O(1)         (Phu trach: Hoang Trong)     \n";
+        cout << " 3. Xoa tai khoan                  (Phu trach: Hoang Trong)     \n";
+        cout << " 4. Nap tien vao tai khoan         (Phu trach: The Quyen)       \n";
+        cout << " 5. Rut tien tu tai khoan          (Phu trach: The Quyen)       \n";
+        cout << " 6. Chuyen khoan an toan           (Phu trach: The Quyen)       \n";
+        cout << " 7. In sao ke lich su giao dich    (Phu trach: The Quyen)       \n";
+        cout << " 8. Chay Thu nghiem & Benchmark    (Phu trach: Phu Quoc)        \n";
+        cout << " 9. Luu du lieu ra File            (Phu trach: Anh Tu)          \n";
+        cout << " 0. Thoat va Luu he thong                                       \n";
+        cout << "================================================================\n";
+        cout << "Lua chon cua ban (0-9): ";
+    }
+}
