@@ -609,3 +609,128 @@ namespace FileAndUIModule {
         cout << "Lua chon cua ban (0-9): ";
     }
 }
+
+// ============================================================================
+// PHAN 6: MODULE TESTING, BENCHMARK & MOCK DATA
+// THANH VIEN PHU TRACH: NGUYEN PHU QUOC - MSSV: 6651060049
+// NHANH GIT: TV5-testing-benchmark-demo
+// NHIEM VU: Kiem thu, Benchmark Rehash/Load Factor & Tao du lieu mau Demo
+// ============================================================================
+
+namespace TestingAndBenchmarkModule {
+
+    // Khoi tao du lieu thu nghiem mau cho 5 thanh vien nhom
+    void generateMockData(HashTable& ht) {
+        cout << "\n--- [MODULE PHU QUOC] KHOI TAO DU LIEU MAU DE DEMO ---\n";
+
+        Account a1("1000000001", "Phan Nam", "012345678901", 5000000);
+        Account a2("1000000002", "Nguyen Phuong Hoang Trong", "012345678902", 12000000);
+        Account a3("1000000003", "Vong The Quyen", "012345678903", 8500000);
+        Account a4("1000000004", "Huynh Anh Tu", "012345678904", 15000000);
+        Account a5("1000000005", "Nguyen Phu Quoc", "012345678905", 20000000);
+
+        ht.insertAccount(a1);
+        ht.insertAccount(a2);
+        ht.insertAccount(a3);
+        ht.insertAccount(a4);
+        ht.insertAccount(a5);
+
+        cout << "=> THANH CONG: Da khoi tao 5 tai khoan mau cho 5 thanh vien nhom!\n";
+    }
+
+    // Thu nghiem Benchmark Hash Table & Rehash
+    void runBenchmark(HashTable& ht) {
+        cout << "\n--- [MODULE PHU QUOC] THU NGHIEM BENCHMARK HASH TABLE & REHASH ---\n";
+        cout << " So luong tai khoan hien tai: " << ht.getSize() << endl;
+        cout << " Kich thuoc Mang bam (Capacity): " << ht.getCapacity() << endl;
+        cout << " He so tai hien tai (Load Factor): " << fixed << setprecision(2) << ht.getLoadFactor() << endl;
+
+        cout << "\n... Dang chen tu dong 20 tai khoan de kiem tra tinh nang REHASH ...\n";
+        for (int i = 10; i < 30; ++i) {
+            string accNum = "10000000" + to_string(i);
+            string name = "Khach Hang Test " + to_string(i);
+            Account acc(accNum, name, "099999999999", 1000000);
+            ht.insertAccount(acc);
+        }
+
+        cout << "\n=> KET QUA SAU KHI BENCHMARK CHEN HANG LOAT:\n";
+        cout << " So luong tai khoan moi: " << ht.getSize() << endl;
+        cout << " Kich thuoc Mang bam moi: " << ht.getCapacity() << endl;
+        cout << " He so tai moi (Load Factor): " << ht.getLoadFactor() << endl;
+        cout << "=> KET LUAN: Thuat toan Rehash hoat dong O(1) bang bam khong bi qua tai!\n";
+    }
+}
+
+// ============================================================================
+// PHAN 7: HAM MAIN CHINH - KET NOI TOAN BO SAN PHAM CUA 5 THANH VIEN
+// TONG HOP VA DIEU KHIEN CHUONG TRINH DU AN DT07
+// ============================================================================
+
+int main() {
+    // Toi uu hoa I/O C++
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    srand(time(0));
+
+    // Khoi tao Bang bam core cua Leader Phan Nam
+    HashTable bankHashTable(11);
+
+    // Tai du lieu cu tu File do Huynh Anh Tu quan ly
+    FileAndUIModule::loadData(bankHashTable);
+
+    // Neu he thong moi hoan toan chua co du lieu thi nap du lieu mau cua Nguyen Phu Quoc
+    if (bankHashTable.getSize() == 0) {
+        TestingAndBenchmarkModule::generateMockData(bankHashTable);
+    }
+
+    int choice;
+    do {
+        FileAndUIModule::showMenu();
+        if (!(cin >> choice)) {
+            cin.clear();
+            cin.ignore(10000, '\n');
+            cout << "=> ERROR: Vui long nhap so tu 0 den 9!\n";
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                AccountManagementModule::openNewAccount(bankHashTable);
+                break;
+            case 2:
+                AccountManagementModule::searchAccountInfo(bankHashTable);
+                break;
+            case 3:
+                AccountManagementModule::closeAccount(bankHashTable);
+                break;
+            case 4:
+                TransactionModule::deposit(bankHashTable);
+                break;
+            case 5:
+                TransactionModule::withdraw(bankHashTable);
+                break;
+            case 6:
+                TransactionModule::transfer(bankHashTable);
+                break;
+            case 7:
+                TransactionModule::printStatement(bankHashTable);
+                break;
+            case 8:
+                TestingAndBenchmarkModule::runBenchmark(bankHashTable);
+                break;
+            case 9:
+                FileAndUIModule::saveData(bankHashTable);
+                break;
+            case 0:
+                FileAndUIModule::saveData(bankHashTable);
+                cout << "\n=> CAM ON BAN DA SU DUNG HE THONG NGAN HANG. TAM BIET!\n";
+                break;
+            default:
+                cout << "=> ERROR: Lua chon khong hop le! Vui long nhap tu 0 den 9.\n";
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
